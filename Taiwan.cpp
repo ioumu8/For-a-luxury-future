@@ -12,8 +12,8 @@ typedef struct {
 	int y;	
 }Pollute;
 
-Pollute point1[3000]; //probably 20000 point;
-Pollute point2[3000];
+Pollute point1[300000]; //probably 20000 point;
+Pollute point2[300000];
 
 int put(int x,int y,int k,int jud){
 	if(plate[y][x]!='#'){
