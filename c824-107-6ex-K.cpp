@@ -15,15 +15,15 @@ bool cmp(Num a, Num b){
 }
 
 long long calculate(std:: vector<Num> &box, int m){
-	if(box[0].time > m)
+	if(box.empty())
 		return 0;
 	while(box.size() > 1){
 		Num num1 = box.front();
-		std:: pop_heap(box.begin(), box.end(), cmp);
 		if(num1.time == m)
 			return num1.value;
+		std:: pop_heap(box.begin(), box.end(), cmp);
 		if(num1.time != box[0].time){
-			box.back().time = box[0].time > m ? m : box[0].time;
+			box.back().time = box[0].time;
 			std::push_heap(box.begin(), box.end(), cmp);	
 			continue;
 		}
@@ -31,14 +31,12 @@ long long calculate(std:: vector<Num> &box, int m){
 		Num num2 = box.front();
 		std:: pop_heap(box.begin(), box.end(), cmp);
 		box.pop_back();
-		num1.time++;
+		num1.time = num1.time == box[0].time ? num1.time += 1 : box[0].time;
 		num1.value += num2.value;
 		box.push_back(num1);
 		std:: push_heap(box.begin(), box.end(), cmp); 
 	}
-	if(box[0].time <= m)
-		return box[0].value; 
-	return 0;
+	return box[0].value; 
 }
 
 int main(){
@@ -49,8 +47,10 @@ int main(){
 	for(int i = 0; i < n; ++i){
 		Num tmp;
 		scanf("%d %lld", &tmp.time, &tmp.value);
-		box.push_back(tmp);
-		std:: push_heap(box.begin(), box.end(), cmp);
+		if(tmp.time <= m){ 
+			box.push_back(tmp);
+			std:: push_heap(box.begin(), box.end(), cmp);
+		}
 	}
 	long long ans = calculate(box, m);
 	printf("%lld\n", ans);
