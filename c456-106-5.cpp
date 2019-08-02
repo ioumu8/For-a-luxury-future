@@ -2,73 +2,64 @@
 #include<vector>
 #include<queue>
 
-struct Member{
-	int club;
-	int line;	
+struct Num{
+	int tie;
+	std:: vector<int> connect; 	
 };
 
-int set_member(std:: vector<Member> &member, std:: vector<std:: vector<int> > &connect){
-	int num = 1;
-	for(int i = 0; i < member.size(); ++i){
-		if(member[i].club == 0){
-			member[i].club = num;
-			member[i].line = connect[i].size();
-			std:: queue<int> set;
-			set.push(i);
-			while(!set.empty()){
-				int keep = set.front();
-				set.pop();
-				for(int j = 0; j < connect[keep].size(); ++j){
-					int now = connect[keep][j];
-					if(member[now].club == 0){
-						member[now].club = num;
-						member[now].line = connect[now].size();
-						set.push(now);	
-					}
-				}
-			} 
-			num++;	
-		}
-	}
-	return num - 1;
+struct Line{
+	int u;
+	int v;	
+};
+
+void set_people(std:: vector<Num> &people){
+	for(int i = 0; i < people.size(); ++i)
+		people[i].tie = 0;	
 }
 
-int find(int now,int club, std:: vector<Member> &member, std:: vector<std:: vector<int> > &connect){
-	bool check = false;
-	while(!check){
-		check = true;
-		for(int i = 0; i < member.size(); ++i){
-			if(member[i].club == club && member[i].line != 0){
-				if(member[i].line < now){
-					check = false;
-					member[i].line = 0;
-					for(int j = 0; j < connect[i].size(); ++j){
-						int keep = connect[i][j];
-						member[keep].line = member[keep].line == 0 ? 0 : member[keep].line - 1;
+void kill(int line, int n, std:: vector<Num> &people, std:: vector<Line> &keep){
+	bool ok = true;
+	while(ok){	
+		ok = false;
+		for(int i = 0; i < n; ++i){
+			if(people[i].tie != 0 && people[i].tie <= line){
+				ok  = true;
+				people[i].tie = 0;
+				for(int j = 0; j < people[i].connect.size(); ++j){
+					int now = people[i].connect[j];
+					if(people[now].tie != 0){
+						people[now].tie--;	
+						keep.push_back({i, now});
 					}
 				}
 			}
 		}
 	}
-	int num = 0;
-	for(int i = 0; i < member.size(); ++i){
-		if(member[i].club == club && member[i].line != 0)
-			num++;
-	}
-	return num;
 }
 
-int calculate(int club, std:: vector<Member> &member, std:: vector<std:: vector<int> > &connect){
-	int now = 1;
-	int maxa = 0;
-	bool ok = false;
-	while(!ok){
-		int num = find(now, club, member, connect);
-		maxa = num * now > maxa ? num * now : maxa; 
-		now++;
-		if(num == 0)
-			ok = true;
+int find(int now, std:: vector<int> &club){
+	return 	club[now] == now ? now : club[now] = find(club[now], club);
+}
+
+void build(std:: vector<int> &club, std:: vector<Line> &order){
+	if(order.size() == 0)
+		return ;
+	for(int i = 0; i < order.size(); ++i){
+		int x = find(club[order[i].u], club);
+		int y = find(club[order[i].v], club);
+		club[x] = y;
 	}
+}
+
+int calculate(std:: vector<int> &club){
+	for(int i = 0; i < club.size(); ++i)
+		club[i] = find(club[i], club);
+	std:: vector<int> num(club.size(), 0);
+	for(int i = 0; i < club.size(); ++i)
+		num[club[i]]++;
+	int maxa = -1;
+	for(int i = 0; i < num.size(); ++i)
+		maxa = maxa > num[i] ? maxa : num[i];
 	return maxa;
 }
 
@@ -76,26 +67,37 @@ int main(){
 	int n;
 	int m;
 	scanf("%d %d", &n, &m);
-	std:: vector<std:: vector<int> > connect(n);
-	std::vector<Member> member(n);
-	for(int i = 0; i < n; ++i){
-		member[i].club = 0;
-		member[i].line = 0;	
-	}
+	std:: vector<Num> people(n);
+	set_people(people);
 	for(int i = 0; i < m; ++i){
-		int a, b;
-		scanf("%d %d", &a, &b);
-		a--;
-		b--;
-		connect[a].push_back(b);
-		connect[b].push_back(a);	
+		int u;
+		int v;
+		scanf("%d %d", &u, &v);
+		u--;
+		v--;
+		people[u].tie++;
+		people[u].connect.push_back(v);
+		people[v].tie++;
+		people[v].connect.push_back(u);
 	}
-	int club = set_member(member, connect);
-	int F = 0;
-	for(int i = 1; i <= club; ++i){
-		int run_F = calculate(i, member, connect);
-		F = run_F > F ? run_F : F;	
+	std:: vector<std:: vector<Line> > order;
+	for(int i= 0; i < n; ++i){
+		std:: vector<Line> keep;
+		kill(i, n, people, keep);
+		order.push_back(keep);
 	}
-	printf("%d\n", F);
+	std:: vector<int> club(n);
+	for(int i = 0; i < n; ++i)
+		club[i] = i;
+	int ans = -1;
+	for(int i = order.size() - 1; i >= 0; --i){
+		build(club, order[i]);
+		int now = calculate(club);
+		if(now != 1){
+			now *= i;
+			ans = ans > now ? ans : now;
+		}
+	}
+	printf("%d\n", ans);
 	return 0;	
 }
